@@ -48,7 +48,7 @@ dvc remote modify --local storage url "$DVC_REMOTE_URL"
 dvc status
 ```
 
-The raw dataset is represented by a committed DVC pointer (`data/raw/credit_risk_dataset.csv.dvc`). The delivered project bundle includes the CSV and its local DVC cache/remote; for a source-only clone, configure an accessible DVC remote and run `dvc pull`. To use S3 or another DVC-supported store, set `DVC_REMOTE_URL` to that remote and configure its credentials in the shell or GitHub Secrets. For example, for S3 configure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; do not store keys in Git. DagsHub and Google Drive remotes require their provider-specific DVC configuration and authentication; change the remote URL and provide credentials through the provider-supported secure mechanism.
+The raw dataset is represented by a committed DVC pointer (`data/raw/credit_risk_dataset.csv.dvc`), and the delivered project bundle includes the CSV, so no pull is needed for the first run. The default local remote is created/populated by `dvc push`; for a source-only clone without the CSV, configure an accessible DVC remote and run `dvc pull`. To use S3 or another DVC-supported store, set `DVC_REMOTE_URL` to that remote and configure its credentials in the shell or GitHub Secrets. For example, for S3 configure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; do not store keys in Git. DagsHub and Google Drive remotes require their provider-specific DVC configuration and authentication; change the remote URL and provide credentials through the provider-supported secure mechanism.
 
 ## Run the full pipeline
 
@@ -181,7 +181,7 @@ The complete variable list is in `.env.example`: `PARAMS_FILE`, `APP_DIR`, `MLFL
 
 | Symptom | Checks |
 |---|---|
-| `dvc pull` cannot find data | Check that the DVC remote URL and credentials match the committed remote configuration; then run `dvc status` and `dvc checkout`. The provided copy includes the original data in its cache. |
+| `dvc pull` cannot find data | Check that the DVC remote URL and credentials match the committed remote configuration; then run `dvc status` and `dvc checkout`. The provided bundle includes the raw CSV; `dvc push` populates the configured remote after a successful run. |
 | DVC says a dependency is missing | Confirm the raw CSV exists at `data.raw_path` and that the committed DVC pointer is checked out. |
 | MLflow cannot register a model | Confirm the tracking URI points to a backend supporting the model registry (SQLite is used locally), and that the same URI is used by training, promotion, and API. |
 | API health is degraded | Train at least one model, run `python -m src.promote`, then call the configured reload endpoint. Check MLflow URI reachability and registry aliases. |
