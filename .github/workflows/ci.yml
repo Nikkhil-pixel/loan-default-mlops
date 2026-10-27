@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MLFLOW_TRACKING_URI: sqlite:///ci-mlflow.db
-      RAW_DATA_PATH: tests/fixtures/credit_risk_sample.csv
       API_PORT: "8000"
       LOG_FILE: logs/test-predictions.jsonl
     steps:

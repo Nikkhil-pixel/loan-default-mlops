@@ -174,7 +174,7 @@ All project-specific settings live in `params.yaml`; `src/config.py` is the shar
 | `monitoring` | `reference_path`, `current_log_path`, `report_path`, `summary_path`, `minimum_rows`, `drift_share_threshold`, `income_shift_multiplier`, `interest_rate_shift`, `api_url`, `sample_limit`, `evidently_shap_enabled` | Drift data locations, sample requirements, detection threshold, demo shifts, and sample cap. |
 | `paths` | `metrics_path`, `training_summary_path`, `mlflow_artifact_path`, `dvc_remote_url` | Pipeline output and artifact/remote paths. |
 
-The complete variable list is in `.env.example`: `RAW_DATA_PATH`, `MLFLOW_TRACKING_URI`, `MLFLOW_PORT`, `MLFLOW_BACKEND_STORE_URI`, `MLFLOW_ARTIFACT_ROOT`, `API_HOST`, `API_PORT`, `API_URL`, `HEALTH_PATH`, `LOG_FILE`, and `DVC_REMOTE_URL`. In GitHub Actions, remote-only secrets are `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; a shared `MLFLOW_TRACKING_URI` and remote `DVC_REMOTE_URL` are also repository secrets. Never commit `.env` or credentials.
+The complete variable list is in `.env.example`: `MLFLOW_TRACKING_URI`, `MLFLOW_PORT`, `MLFLOW_BACKEND_STORE_URI`, `MLFLOW_ARTIFACT_ROOT`, `API_HOST`, `API_PORT`, `API_URL`, `HEALTH_PATH`, `LOG_FILE`, and `DVC_REMOTE_URL`. The raw dataset path is a DVC dependency configured at `data.raw_path` in `params.yaml`. In GitHub Actions, remote-only secrets are `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; a shared `MLFLOW_TRACKING_URI` and remote `DVC_REMOTE_URL` are also repository secrets. Never commit `.env` or credentials.
 
 ## Troubleshooting
 

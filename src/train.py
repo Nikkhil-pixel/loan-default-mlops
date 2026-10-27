@@ -77,6 +77,38 @@ def _git_commit() -> str:
         return "working-tree"
 
 
+def _log_optional_shap(config: dict[str, Any], best: dict[str, Any], X_train: pd.DataFrame, client: MlflowClient) -> None:
+    """Attempt a small SHAP summary for the selected run without breaking training."""
+    if not config["models"]["shap_summary_enabled"]:
+        return
+    try:
+        import matplotlib.pyplot as plt
+        import shap
+
+        columns = config["project"]["feature_columns"]
+        sample = X_train.sample(
+            n=min(config["models"]["shap_sample_size"], len(X_train)),
+            random_state=config["data"]["random_seed"],
+        )
+        pipeline = mlflow.sklearn.load_model(f"runs:/{best['run_id']}/pipeline")
+        positive_index = list(pipeline.classes_).index(config["project"]["positive_class"])
+
+        def predict(values):
+            return pipeline.predict_proba(pd.DataFrame(values, columns=columns))[:, positive_index]
+
+        background = sample.to_numpy()
+        explainer = shap.Explainer(predict, shap.maskers.Independent(background), feature_names=columns)
+        explanations = explainer(background, max_evals=2 * len(columns) + 1)
+        shap.summary_plot(explanations, background, feature_names=columns, show=False)
+        artifact_path = project_path(config["paths"]["mlflow_artifact_path"]) / f"shap-{best['run_id']}.png"
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        plt.savefig(artifact_path, bbox_inches="tight")
+        plt.close()
+        client.log_artifact(best["run_id"], str(artifact_path), artifact_path="explainability")
+    except Exception as exc:  # Optional by design: a SHAP incompatibility must not block model delivery.
+        print(f"Optional SHAP summary was skipped: {exc}")
+
+
 def train_models(config: dict[str, Any], input_path: Path) -> dict[str, Any]:
     """Split once, fit each configured model, log artifacts, register versions."""
     frame = pd.read_csv(input_path)
@@ -136,6 +168,7 @@ def train_models(config: dict[str, Any], input_path: Path) -> dict[str, Any]:
 
     metric = registry["selection_metric"]
     best = max(results, key=lambda result: result["metrics"][metric])
+    _log_optional_shap(config, best, X_train, client)
     summary = {
         "selection_metric": metric,
         "best_run_id": best["run_id"],
