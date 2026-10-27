@@ -9,8 +9,8 @@ stages:
       size: 1804682
     - path: src/config.py
       hash: md5
-      md5: bbc48c1818f8a295ec73c91927fce668
-      size: 1824
+      md5: f4d5992f9f94dbf82dc3cfe861b93c80
+      size: 1896
     - path: src/prepare.py
       hash: md5
       md5: 7536a6b89f649ca1a97aaad38730f793
@@ -52,16 +52,16 @@ stages:
       size: 1722439
     - path: src/config.py
       hash: md5
-      md5: bbc48c1818f8a295ec73c91927fce668
-      size: 1824
+      md5: f4d5992f9f94dbf82dc3cfe861b93c80
+      size: 1896
     - path: src/metrics.py
       hash: md5
-      md5: cee7cb55bff0daebc05c3aed20332380
-      size: 2372
+      md5: 360a5f46cf26f92cf4859abbcec72117
+      size: 2426
     - path: src/train.py
       hash: md5
-      md5: cd1c7501fe05d985d9f659a6b9564c81
-      size: 9415
+      md5: 4ee3b548d1f65608285c8eeecf2dab01
+      size: 9666
     params:
       params.yaml:
         data.missing_indicator: true
@@ -101,6 +101,10 @@ stages:
               objective: binary:logistic
               eval_metric: logloss
               n_jobs: -1
+        paths.confusion_matrix_filename: confusion_matrix.json
+        paths.mlflow_artifact_path: artifacts
+        paths.pr_plot_filename: precision_recall_curve.png
+        paths.roc_plot_filename: roc_curve.png
         project.categorical_features:
         - person_home_ownership
         - loan_intent
@@ -127,7 +131,12 @@ stages:
         - loan_percent_income
         - cb_person_cred_hist_length
         project.target_column: loan_status
+        registry.experiment_name: loan-default-risk
+        registry.model_artifact_path: pipeline
+        registry.model_name: loan-default-classifier
         registry.selection_metric: roc_auc
+        registry.tracking_uri: ${MLFLOW_TRACKING_URI:-sqlite:///mlflow.db}
+        registry.training_evaluation_artifact_path: evaluation
     outs:
     - path: data/processed/test.csv
       hash: md5
@@ -139,7 +148,7 @@ stages:
       size: 1377692
     - path: reports/training_summary.json
       hash: md5
-      md5: b364b76fde4b40779afda52dcad85df7
+      md5: 66004794d7e1279a81fdfec2dc5ed819
       size: 1558
   evaluate:
     cmd: python -m src.evaluate
@@ -150,23 +159,29 @@ stages:
       size: 344944
     - path: reports/training_summary.json
       hash: md5
-      md5: b364b76fde4b40779afda52dcad85df7
+      md5: 66004794d7e1279a81fdfec2dc5ed819
       size: 1558
     - path: src/evaluate.py
       hash: md5
-      md5: a1b068bc5be7dba31e4bf41c94ec96e4
-      size: 2324
+      md5: 1eb85ddecf508a925ea5b25a0781e44d
+      size: 2483
     - path: src/metrics.py
       hash: md5
-      md5: cee7cb55bff0daebc05c3aed20332380
-      size: 2372
+      md5: 360a5f46cf26f92cf4859abbcec72117
+      size: 2426
     params:
       params.yaml:
         models.decision_threshold: 0.5
+        paths.confusion_matrix_filename: confusion_matrix.json
+        paths.evaluation_artifact_dir: reports/evaluation
         paths.metrics_path: reports/metrics.json
+        paths.pr_plot_filename: precision_recall_curve.png
+        paths.roc_plot_filename: roc_curve.png
+        registry.final_evaluation_artifact_path: final_evaluation
+        registry.model_artifact_path: pipeline
         registry.tracking_uri: ${MLFLOW_TRACKING_URI:-sqlite:///mlflow.db}
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 4a182e2477e4a957aa5098caab1ded87
+      md5: 4bd495b7a3cbdcd99fbf02fedc721d5a
       size: 466
