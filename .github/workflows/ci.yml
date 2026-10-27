@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      MLFLOW_TRACKING_URI: sqlite:///ci-mlflow.db
+      RAW_DATA_PATH: tests/fixtures/credit_risk_sample.csv
+      API_PORT: "8000"
+      LOG_FILE: logs/test-predictions.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install pinned dependencies
+        run: pip install -r requirements.txt
+      - name: Ruff lint
+        run: ruff check src app tests
+      - name: Fixture training smoke test
+        run: |
+          python -m src.prepare --input tests/fixtures/credit_risk_sample.csv --output data/processed/clean.csv
+          python -m src.train --input data/processed/clean.csv
+          python -m src.evaluate
+          python -m src.promote
+      - name: Run unit and API tests
+        run: pytest -q
+      - name: Build Docker image
+        run: docker build --tag loan-default-mlops:${{ github.sha }} .
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

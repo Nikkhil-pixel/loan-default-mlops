@@ -1,0 +1,55 @@
+stages:
+  prepare:
+    cmd: python -m src.prepare
+    deps:
+      - src/prepare.py
+      - src/config.py
+      - ${data.raw_path}
+    params:
+      - project.feature_columns
+      - project.target_column
+      - data.min_age
+      - data.max_age
+      - data.minimum_working_age
+      - data.age_column
+      - data.employment_length_column
+      - data.income_column
+      - data.income_cap_enabled
+      - data.income_cap_quantile
+    outs:
+      - ${data.processed_path}
+  train:
+    cmd: python -m src.train
+    deps:
+      - src/train.py
+      - src/metrics.py
+      - src/config.py
+      - ${data.processed_path}
+    params:
+      - project.feature_columns
+      - project.numeric_features
+      - project.categorical_features
+      - project.target_column
+      - data.test_size
+      - data.random_seed
+      - data.missing_indicator
+      - models
+      - registry.selection_metric
+    outs:
+      - ${data.train_path}
+      - ${data.test_path}
+      - ${paths.training_summary_path}
+  evaluate:
+    cmd: python -m src.evaluate
+    deps:
+      - src/evaluate.py
+      - src/metrics.py
+      - ${data.test_path}
+      - ${paths.training_summary_path}
+    params:
+      - models.decision_threshold
+      - registry.tracking_uri
+      - paths.metrics_path
+    metrics:
+      - ${paths.metrics_path}:
+          cache: false

@@ -1,0 +1,20 @@
+# Verified runtime and development dependencies for Python 3.11.
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.5.2
+xgboost==2.1.4
+mlflow==2.19.0
+SQLAlchemy==2.0.36
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+PyYAML==6.0.2
+python-dotenv==1.0.1
+requests==2.32.3
+evidently==0.4.40
+dvc==3.59.0
+pathspec==0.12.1
+matplotlib==3.9.4
+pytest==8.3.4
+ruff==0.8.4
+httpx==0.28.1

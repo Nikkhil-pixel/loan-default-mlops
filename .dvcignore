@@ -1,0 +1,3 @@
+# DVC cache and local remote contents are storage internals, not pipeline inputs.
+.dvc/cache
+.dvc/tmp

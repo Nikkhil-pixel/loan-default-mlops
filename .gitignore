@@ -1,0 +1,34 @@
+# Local configuration and secrets
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# DVC-managed data/cache; pointer files remain versioned
+/data/raw/*
+!/data/raw/*.dvc
+/data/processed/*
+/data/batches/*
+!/data/batches/*.dvc
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+!/data/batches/.gitkeep
+.dvc/cache/
+dvc-storage/
+
+# Run-time artifacts and local MLflow state
+mlruns/
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
+artifacts/
+logs/*.jsonl
+reports/*.html
+reports/drift_summary.json
+reports/training_summary.json
+reports/evaluation/
+
+# Tool caches and OS noise
+.DS_Store

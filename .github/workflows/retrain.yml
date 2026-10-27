@@ -1,0 +1,92 @@
+name: Drift monitor and controlled retraining
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_retrain:
+        description: Retrain even when monitoring does not flag drift
+        type: boolean
+        required: false
+        default: false
+  schedule:
+    - cron: "0 5 * * 1"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  DVC_REMOTE_URL: ${{ secrets.DVC_REMOTE_URL }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    outputs:
+      drift_detected: ${{ steps.result.outputs.drift_detected }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Configure DVC remote and credentials
+        run: |
+          if [ -n "$DVC_REMOTE_URL" ]; then dvc remote modify --local storage url "$DVC_REMOTE_URL"; fi
+          if [ -n "$AWS_ACCESS_KEY_ID" ]; then dvc remote modify --local storage access_key_id "$AWS_ACCESS_KEY_ID"; fi
+          if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then dvc remote modify --local storage secret_access_key "$AWS_SECRET_ACCESS_KEY"; fi
+      - run: dvc pull
+      - name: Run drift monitor
+        run: python -m src.monitor
+      - id: result
+        run: echo "drift_detected=$(python -c 'import json; print(str(json.load(open("reports/drift_summary.json"))["drift_detected"]).lower())')" >> "$GITHUB_OUTPUT"
+
+  retrain:
+    needs: monitor
+    if: needs.monitor.outputs.drift_detected == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_retrain)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Configure DVC remote and credentials
+        run: |
+          if [ -n "$DVC_REMOTE_URL" ]; then dvc remote modify --local storage url "$DVC_REMOTE_URL"; fi
+          if [ -n "$AWS_ACCESS_KEY_ID" ]; then dvc remote modify --local storage access_key_id "$AWS_ACCESS_KEY_ID"; fi
+          if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then dvc remote modify --local storage secret_access_key "$AWS_SECRET_ACCESS_KEY"; fi
+      - run: dvc pull
+      - run: dvc repro
+      - run: dvc push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retraining-reports
+          path: reports/metrics.json
+
+  approved-promotion:
+    needs: retrain
+    if: needs.retrain.result == 'success'
+    runs-on: ubuntu-latest
+    environment: model-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Configure DVC remote and credentials
+        run: |
+          if [ -n "$DVC_REMOTE_URL" ]; then dvc remote modify --local storage url "$DVC_REMOTE_URL"; fi
+          if [ -n "$AWS_ACCESS_KEY_ID" ]; then dvc remote modify --local storage access_key_id "$AWS_ACCESS_KEY_ID"; fi
+          if [ -n "$AWS_SECRET_ACCESS_KEY" ]; then dvc remote modify --local storage secret_access_key "$AWS_SECRET_ACCESS_KEY"; fi
+      - run: dvc pull
+      - name: Promote candidate through MLflow registry aliases
+        run: python -m src.promote

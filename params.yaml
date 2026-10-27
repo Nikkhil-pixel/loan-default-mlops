@@ -1,0 +1,88 @@
+project:
+  name: loan-default-mlops
+  target_column: loan_status
+  positive_class: 1
+  feature_columns: [person_age, person_income, person_home_ownership, person_emp_length, loan_intent, loan_grade, loan_amnt, loan_int_rate, loan_percent_income, cb_person_default_on_file, cb_person_cred_hist_length]
+  numeric_features: [person_age, person_income, person_emp_length, loan_amnt, loan_int_rate, loan_percent_income, cb_person_cred_hist_length]
+  categorical_features: [person_home_ownership, loan_intent, loan_grade, cb_person_default_on_file]
+  categories:
+    person_home_ownership: [RENT, OWN, MORTGAGE, OTHER]
+    loan_intent: [PERSONAL, EDUCATION, MEDICAL, VENTURE, HOMEIMPROVEMENT, DEBTCONSOLIDATION]
+    loan_grade: [A, B, C, D, E, F, G]
+    cb_person_default_on_file: [Y, N]
+  value_ranges:
+    person_age: [18, 80]
+    person_income: [0, 6000000]
+    person_emp_length: [0, 64]
+    loan_amnt: [0, 1000000]
+    loan_int_rate: [0, 100]
+    loan_percent_income: [0, 100]
+    cb_person_cred_hist_length: [0, 100]
+  target_values: [0, 1]
+data:
+  raw_path: "${RAW_DATA_PATH:-data/raw/credit_risk_dataset.csv}"
+  processed_path: data/processed/clean.csv
+  batches_dir: data/batches
+  batch_fractions: [0.6, 0.2, 0.2]
+  random_seed: 42
+  min_age: 18
+  max_age: 80
+  minimum_working_age: 16
+  age_column: person_age
+  employment_length_column: person_emp_length
+  income_column: person_income
+  interest_rate_column: loan_int_rate
+  income_cap_enabled: false
+  income_cap_quantile: 0.99
+  test_size: 0.2
+  missing_indicator: true
+  train_path: data/processed/train.csv
+  test_path: data/processed/test.csv
+models:
+  selected: [logistic_regression, random_forest, xgboost]
+  decision_threshold: 0.5
+  shap_summary_enabled: false
+  shap_sample_size: 60
+  logistic_regression:
+    class_path: sklearn.linear_model.LogisticRegression
+    imbalance_parameter: class_weight
+    parameters: {max_iter: 1000, C: 1.0}
+  random_forest:
+    class_path: sklearn.ensemble.RandomForestClassifier
+    imbalance_parameter: class_weight
+    parameters: {n_estimators: 120, max_depth: 12, min_samples_leaf: 2, n_jobs: -1}
+  xgboost:
+    class_path: xgboost.XGBClassifier
+    imbalance_parameter: scale_pos_weight
+    parameters: {n_estimators: 120, max_depth: 5, learning_rate: 0.08, subsample: 0.9, colsample_bytree: 0.9, objective: binary:logistic, eval_metric: logloss, n_jobs: -1}
+registry:
+  tracking_uri: "${MLFLOW_TRACKING_URI:-sqlite:///mlflow.db}"
+  experiment_name: loan-default-risk
+  model_name: loan-default-classifier
+  champion_alias: champion
+  challenger_alias: challenger
+  selection_metric: roc_auc
+  metric_direction: maximize
+  metric_promotion_margin: 0.002
+api:
+  host: "${API_HOST:-0.0.0.0}"
+  port: "${API_PORT:-8000}"
+  routes: {health: "${HEALTH_PATH:-/health}", predict: /predict, batch: /predict/batch, model_info: /model-info, reload: /reload-model}
+  risk_bands: {low_max: 0.10, medium_max: 0.25, low_label: low, medium_label: medium, high_label: high}
+  request_log_path: "${LOG_FILE:-logs/predictions.jsonl}"
+monitoring:
+  reference_path: data/processed/train.csv
+  current_log_path: "${LOG_FILE:-logs/predictions.jsonl}"
+  report_path: reports/data_drift.html
+  summary_path: reports/drift_summary.json
+  minimum_rows: 30
+  drift_share_threshold: 0.5
+  income_shift_multiplier: 1.5
+  interest_rate_shift: 3.0
+  api_url: "${API_URL:-http://localhost:8000}"
+  sample_limit: 1000
+paths:
+  metrics_path: reports/metrics.json
+  training_summary_path: reports/training_summary.json
+  mlflow_artifact_path: artifacts
+  dvc_remote_url: "${DVC_REMOTE_URL:-./dvc-storage}"
