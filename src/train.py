@@ -90,7 +90,9 @@ def _log_optional_shap(config: dict[str, Any], best: dict[str, Any], X_train: pd
             n=min(config["models"]["shap_sample_size"], len(X_train)),
             random_state=config["data"]["random_seed"],
         )
-        pipeline = mlflow.sklearn.load_model(f"runs:/{best['run_id']}/pipeline")
+        pipeline = mlflow.sklearn.load_model(
+            f"runs:/{best['run_id']}/{config['registry']['model_artifact_path']}"
+        )
         positive_index = list(pipeline.classes_).index(config["project"]["positive_class"])
 
         def predict(values):
@@ -154,9 +156,15 @@ def train_models(config: dict[str, Any], input_path: Path) -> dict[str, Any]:
             mlflow.log_metrics(logged)
             mlflow.set_tags({"data_version": data_version, "git_commit": git_commit, "model_key": model_key})
             artifact_dir = project_path(config["paths"]["mlflow_artifact_path"]) / run.info.run_id
-            log_evaluation_artifacts(scores, artifact_dir)
-            mlflow.log_artifacts(str(artifact_dir), artifact_path="evaluation")
-            model_info = mlflow.sklearn.log_model(pipeline, artifact_path="pipeline")
+            log_evaluation_artifacts(scores, artifact_dir, config["paths"])
+            mlflow.log_artifacts(
+                str(artifact_dir), artifact_path=registry["training_evaluation_artifact_path"]
+            )
+            model_info = mlflow.sklearn.log_model(
+                pipeline,
+                artifact_path=registry["model_artifact_path"],
+                input_example=X_train.head(),
+            )
             registered = mlflow.register_model(model_info.model_uri, registry["model_name"])
             client.set_model_version_tag(registry["model_name"], registered.version, registry["selection_metric"], str(logged[registry["selection_metric"]]))
             client.set_model_version_tag(registry["model_name"], registered.version, "run_id", run.info.run_id)

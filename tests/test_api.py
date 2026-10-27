@@ -17,7 +17,7 @@ class DummyClassifier:
 
 def _payload() -> dict:
     config = load_config()
-    row = pd.read_csv("tests/fixtures/credit_risk_sample.csv").dropna(subset=config["project"]["feature_columns"]).iloc[0]
+    row = pd.read_csv(project_path(config["testing"]["fixture_path"])).dropna(subset=config["project"]["feature_columns"]).iloc[0]
     return {name: row[name].item() if hasattr(row[name], "item") else row[name] for name in config["project"]["feature_columns"]}
 
 
@@ -25,7 +25,7 @@ def test_api_prediction_validation_info_and_reload(monkeypatch) -> None:
     main.STATE.update({"model": DummyClassifier(), "version": "7", "run_id": "run-7", "data_version": "data-7", "error": None})
     monkeypatch.setattr(main, "reload_model", lambda: {"status": "test-loaded"})
     config = load_config()
-    monkeypatch.setitem(config["api"], "request_log_path", "logs/api-test.jsonl")
+    monkeypatch.setitem(config["api"], "request_log_path", config["testing"]["api_log_path"])
     monkeypatch.setattr(main, "CONFIG", config)
     monkeypatch.setattr(main, "REGISTRY", config["registry"])
     with TestClient(main.app) as client:

@@ -35,6 +35,15 @@ stages:
       - data.missing_indicator
       - models
       - registry.selection_metric
+      - registry.tracking_uri
+      - registry.experiment_name
+      - registry.model_name
+      - registry.model_artifact_path
+      - registry.training_evaluation_artifact_path
+      - paths.mlflow_artifact_path
+      - paths.roc_plot_filename
+      - paths.pr_plot_filename
+      - paths.confusion_matrix_filename
     outs:
       - ${data.train_path}
       - ${data.test_path}
@@ -49,7 +58,13 @@ stages:
     params:
       - models.decision_threshold
       - registry.tracking_uri
+      - registry.model_artifact_path
+      - registry.final_evaluation_artifact_path
       - paths.metrics_path
+      - paths.evaluation_artifact_dir
+      - paths.roc_plot_filename
+      - paths.pr_plot_filename
+      - paths.confusion_matrix_filename
     metrics:
       - ${paths.metrics_path}:
           cache: false

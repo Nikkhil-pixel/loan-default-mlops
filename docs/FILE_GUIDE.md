@@ -5,7 +5,7 @@ This guide maps the repository from input data to monitored serving. The design 
 | File or folder | What it does and why it exists |
 |---|---|
 | `README.md` | Main setup, usage, configuration reference, system flow, dataset caveats, and troubleshooting. |
-| `params.yaml` | Single human-editable source for feature/target definitions, categories/ranges, cleaning rules, batch fractions, model hyperparameters, MLflow aliases, risk bands, and output paths. |
+| `params.yaml` | Single human-editable source for feature/target definitions, categories/ranges, cleaning rules, batch fractions, model hyperparameters, MLflow aliases, risk bands, output paths, and test fixture locations. |
 | `.env.example` | Lists local/Docker environment overrides. Copy it to `.env`; never commit the real file. |
 | `src/config.py` | Shared loader used by scripts and the API; reads YAML, expands environment placeholders, and resolves project-relative paths. |
 | `src/prepare.py` | Removes exact duplicates, impossible ages, and implausibly long employment histories. It deliberately leaves missing values for pipeline-time imputation. |

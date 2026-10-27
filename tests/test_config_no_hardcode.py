@@ -28,7 +28,9 @@ def test_known_tunable_values_are_not_embedded_in_src_or_app() -> None:
     known_values.update(config["project"]["categories"].keys())
     for choices in config["project"]["categories"].values():
         known_values.update(choice for choice in choices if len(choice) > 2)
-    for section in ("data", "api", "monitoring", "paths", "registry"):
+    for model_key in config["models"]["selected"]:
+        known_values.add(config["models"][model_key]["class_path"])
+    for section in ("data", "api", "monitoring", "paths", "registry", "testing"):
         known_values.update(
             value for value in _configured_values(config[section])
             if isinstance(value, str) and ("/" in value or "://" in value or "." in value)

@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CONFIG_FILE = os.getenv("PARAMS_FILE", "params.yaml")
 _ENV_PATTERN = re.compile(r"\$\{([^}:]+)(?::-([^}]*))?\}")
 
 
@@ -29,7 +30,7 @@ def _interpolate(value: Any) -> Any:
 
 def load_config(path: str | Path | None = None) -> dict[str, Any]:
     """Load YAML parameters and expand environment-based overrides."""
-    config_path = Path(path) if path else ROOT / "params.yaml"
+    config_path = Path(path) if path else Path(DEFAULT_CONFIG_FILE)
     if not config_path.is_absolute():
         config_path = ROOT / config_path
     with config_path.open(encoding="utf-8") as handle:
@@ -47,7 +48,7 @@ def config_hash(path: str | Path | None = None) -> str:
     """Return a stable hash of the active configuration file."""
     import hashlib
 
-    config_path = Path(path) if path else ROOT / "params.yaml"
+    config_path = Path(path) if path else Path(DEFAULT_CONFIG_FILE)
     if not config_path.is_absolute():
         config_path = ROOT / config_path
     return hashlib.sha256(config_path.read_bytes()).hexdigest()

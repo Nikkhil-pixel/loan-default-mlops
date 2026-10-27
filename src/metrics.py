@@ -43,19 +43,19 @@ def classification_metrics(y_true: np.ndarray, probabilities: np.ndarray, thresh
     }
 
 
-def log_evaluation_artifacts(metrics: dict[str, Any], artifact_dir: Path) -> None:
-    """Write ROC and PR charts plus a JSON confusion-matrix artifact."""
+def log_evaluation_artifacts(metrics: dict[str, Any], artifact_dir: Path, file_names: dict[str, str]) -> None:
+    """Write configured ROC/PR chart files and a JSON confusion matrix."""
     artifact_dir.mkdir(parents=True, exist_ok=True)
     for name, x, y, xlabel, ylabel in (
-        ("roc_curve.png", metrics["roc_curve"][0], metrics["roc_curve"][1], "False positive rate", "True positive rate"),
-        ("precision_recall_curve.png", metrics["pr_curve"][0], metrics["pr_curve"][1], "Recall", "Precision"),
+        (file_names["roc_plot_filename"], metrics["roc_curve"][0], metrics["roc_curve"][1], "False positive rate", "True positive rate"),
+        (file_names["pr_plot_filename"], metrics["pr_curve"][0], metrics["pr_curve"][1], "Recall", "Precision"),
     ):
         fig, axis = plt.subplots()
         axis.plot(x, y)
-        axis.set(xlabel=xlabel, ylabel=ylabel, title=name.replace("_", " ").removesuffix(".png"))
+        axis.set(xlabel=xlabel, ylabel=ylabel, title=Path(name).stem.replace("_", " "))
         fig.tight_layout()
         fig.savefig(artifact_dir / name)
         plt.close(fig)
-    (artifact_dir / "confusion_matrix.json").write_text(
+    (artifact_dir / file_names["confusion_matrix_filename"]).write_text(
         json.dumps(metrics["confusion_matrix"], indent=2), encoding="utf-8"
     )

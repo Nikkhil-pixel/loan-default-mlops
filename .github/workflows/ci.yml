@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MLFLOW_TRACKING_URI: sqlite:///ci-mlflow.db
-      API_PORT: "8000"
-      LOG_FILE: logs/test-predictions.jsonl
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,14 +27,18 @@ jobs:
         run: ruff check src app tests
       - name: Fixture training smoke test
         run: |
-          python -m src.prepare --input tests/fixtures/credit_risk_sample.csv --output data/processed/clean.csv
-          python -m src.train --input data/processed/clean.csv
+          fixture_path="$(python -c 'from src.config import load_config, project_path; print(project_path(load_config()["testing"]["fixture_path"]))')"
+          processed_path="$(python -c 'from src.config import load_config, project_path; print(project_path(load_config()["data"]["processed_path"]))')"
+          python -m src.prepare --input "$fixture_path" --output "$processed_path"
+          python -m src.train --input "$processed_path"
           python -m src.evaluate
           python -m src.promote
       - name: Run unit and API tests
         run: pytest -q
       - name: Build Docker image
-        run: docker build --tag loan-default-mlops:${{ github.sha }} .
+        run: |
+          project_name="$(python -c 'from src.config import load_config; print(load_config()["project"]["name"])')"
+          docker build --tag "$project_name:${GITHUB_SHA}" .
 
   publish:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

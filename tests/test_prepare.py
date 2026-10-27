@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.config import load_config
+from src.config import load_config, project_path
 from src.prepare import prepare_data
 
 
 def test_cleaning_deduplicates_filters_and_keeps_missing_values(tmp_path: Path) -> None:
     config = load_config()
-    source = pd.read_csv(Path("tests/fixtures/credit_risk_sample.csv"))
+    source = pd.read_csv(project_path(config["testing"]["fixture_path"]))
     valid = source.dropna(subset=config["project"]["feature_columns"]).iloc[0].copy()
     age_col = config["data"]["age_column"]
     emp_col = config["data"]["employment_length_column"]

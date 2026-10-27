@@ -20,7 +20,9 @@ def evaluate(config: dict) -> dict:
     summary = json.loads(project_path(config["paths"]["training_summary_path"]).read_text(encoding="utf-8"))
     test = pd.read_csv(project_path(config["data"]["test_path"]))
     project = config["project"]
-    model = mlflow.sklearn.load_model(f"runs:/{summary['best_run_id']}/pipeline")
+    model = mlflow.sklearn.load_model(
+        f"runs:/{summary['best_run_id']}/{config['registry']['model_artifact_path']}"
+    )
     positive_index = list(model.classes_).index(project["positive_class"])
     probabilities = model.predict_proba(test[project["feature_columns"]])[:, positive_index]
     binary_y = (test[project["target_column"]].to_numpy() == project["positive_class"]).astype(int)
@@ -33,12 +35,16 @@ def evaluate(config: dict) -> dict:
     output = project_path(config["paths"]["metrics_path"])
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2), encoding="utf-8")
-    artifact_dir = output.parent / "evaluation"
-    log_evaluation_artifacts(raw, artifact_dir)
+    artifact_dir = project_path(config["paths"]["evaluation_artifact_dir"])
+    log_evaluation_artifacts(raw, artifact_dir, config["paths"])
     for key, value in result.items():
         if isinstance(value, float | int):
             client.log_metric(summary["best_run_id"], key, float(value))
-    client.log_artifacts(summary["best_run_id"], str(artifact_dir), artifact_path="final_evaluation")
+    client.log_artifacts(
+        summary["best_run_id"],
+        str(artifact_dir),
+        artifact_path=config["registry"]["final_evaluation_artifact_path"],
+    )
     print(json.dumps(result, indent=2))
     return result
 

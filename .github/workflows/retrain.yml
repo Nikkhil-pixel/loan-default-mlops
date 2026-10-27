@@ -44,7 +44,10 @@ jobs:
       - name: Run drift monitor
         run: python -m src.monitor
       - id: result
-        run: echo "drift_detected=$(python -c 'import json; print(str(json.load(open("reports/drift_summary.json"))["drift_detected"]).lower())')" >> "$GITHUB_OUTPUT"
+        run: |
+          summary_path="$(python -c 'from src.config import load_config, project_path; print(project_path(load_config()["monitoring"]["summary_path"]))')"
+          drift_detected="$(python -c 'import json,sys; print(str(json.loads(open(sys.argv[1]).read())["drift_detected"]).lower())' "$summary_path")"
+          echo "drift_detected=$drift_detected" >> "$GITHUB_OUTPUT"
 
   retrain:
     needs: monitor
@@ -65,10 +68,6 @@ jobs:
       - run: dvc pull
       - run: dvc repro
       - run: dvc push
-      - uses: actions/upload-artifact@v4
-        with:
-          name: retraining-reports
-          path: reports/metrics.json
 
   approved-promotion:
     needs: retrain

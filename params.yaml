@@ -64,9 +64,13 @@ registry:
   selection_metric: roc_auc
   metric_direction: maximize
   metric_promotion_margin: 0.002
+  model_artifact_path: pipeline
+  training_evaluation_artifact_path: evaluation
+  final_evaluation_artifact_path: final_evaluation
 api:
   host: "${API_HOST:-0.0.0.0}"
   port: "${API_PORT:-8000}"
+  healthcheck_url: "${API_HEALTHCHECK_URL:-http://127.0.0.1:${API_PORT:-8000}${HEALTH_PATH:-/health}}"
   routes: {health: "${HEALTH_PATH:-/health}", predict: /predict, batch: /predict/batch, model_info: /model-info, reload: /reload-model}
   risk_bands: {low_max: 0.10, medium_max: 0.25, low_label: low, medium_label: medium, high_label: high}
   request_log_path: "${LOG_FILE:-logs/predictions.jsonl}"
@@ -85,4 +89,12 @@ paths:
   metrics_path: reports/metrics.json
   training_summary_path: reports/training_summary.json
   mlflow_artifact_path: artifacts
+  evaluation_artifact_dir: reports/evaluation
+  roc_plot_filename: roc_curve.png
+  pr_plot_filename: precision_recall_curve.png
+  confusion_matrix_filename: confusion_matrix.json
   dvc_remote_url: "${DVC_REMOTE_URL:-./dvc-storage}"
+testing:
+  fixture_path: tests/fixtures/credit_risk_sample.csv
+  api_log_path: logs/api-test.jsonl
+  ci_log_path: logs/test-predictions.jsonl

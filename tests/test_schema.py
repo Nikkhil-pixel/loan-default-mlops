@@ -3,12 +3,12 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas import build_request_model
-from src.config import load_config
+from src.config import load_config, project_path
 
 
 def _valid_payload() -> dict:
     config = load_config()
-    row = pd.read_csv("tests/fixtures/credit_risk_sample.csv").dropna(subset=config["project"]["feature_columns"]).iloc[0]
+    row = pd.read_csv(project_path(config["testing"]["fixture_path"])).dropna(subset=config["project"]["feature_columns"]).iloc[0]
     return {name: row[name].item() if hasattr(row[name], "item") else row[name] for name in config["project"]["feature_columns"]}
 
 
