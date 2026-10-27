@@ -15,6 +15,8 @@ from src.metrics import classification_metrics, log_evaluation_artifacts
 
 def evaluate(config: dict) -> dict:
     """Score the best run on the held-out set and store a compact metrics report."""
+    mlflow.set_tracking_uri(config["registry"]["tracking_uri"])
+    client = MlflowClient(tracking_uri=config["registry"]["tracking_uri"])
     summary = json.loads(project_path(config["paths"]["training_summary_path"]).read_text(encoding="utf-8"))
     test = pd.read_csv(project_path(config["data"]["test_path"]))
     project = config["project"]
@@ -33,9 +35,9 @@ def evaluate(config: dict) -> dict:
     output.write_text(json.dumps(result, indent=2), encoding="utf-8")
     artifact_dir = output.parent / "evaluation"
     log_evaluation_artifacts(raw, artifact_dir)
-    mlflow.set_tracking_uri(config["registry"]["tracking_uri"])
-    client = MlflowClient(tracking_uri=config["registry"]["tracking_uri"])
-    client.log_metrics(summary["best_run_id"], {key: value for key, value in result.items() if isinstance(value, float | int)})
+    for key, value in result.items():
+        if isinstance(value, float | int):
+            client.log_metric(summary["best_run_id"], key, float(value))
     client.log_artifacts(summary["best_run_id"], str(artifact_dir), artifact_path="final_evaluation")
     print(json.dumps(result, indent=2))
     return result

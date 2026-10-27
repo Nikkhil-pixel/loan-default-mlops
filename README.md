@@ -41,14 +41,14 @@ cp .env.example .env
 set -a && source .env && set +a
 ```
 
-The `.env` file is local-only and must not be committed. The defaults use a SQLite MLflow backend and a local DVC remote. To initialize DVC on a fresh clone, use `dvc init`; then configure the local remote from the environment template:
+The `.env` file is local-only and must not be committed. The repository already contains its DVC configuration and defaults to a SQLite MLflow backend and a local DVC remote. To point the local remote at a different location, use:
 
 ```bash
-dvc remote add --local -d storage "$DVC_REMOTE_URL"
+dvc remote modify --local storage url "$DVC_REMOTE_URL"
 dvc status
 ```
 
-The repository's raw dataset is represented by a committed DVC pointer (`data/raw/credit_risk_dataset.csv.dvc`); materialize it with `dvc pull` if it is not already present. For this delivered copy the original CSV is included in the DVC cache. To use S3 or another DVC-supported store, set `DVC_REMOTE_URL` to that remote and configure its credentials in the shell or GitHub Secrets. For example, for S3 configure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; do not store keys in Git. DagsHub and Google Drive remotes require their provider-specific DVC configuration and authentication; change the remote URL and provide credentials through the provider-supported secure mechanism.
+The raw dataset is represented by a committed DVC pointer (`data/raw/credit_risk_dataset.csv.dvc`). The delivered project bundle includes the CSV and its local DVC cache/remote; for a source-only clone, configure an accessible DVC remote and run `dvc pull`. To use S3 or another DVC-supported store, set `DVC_REMOTE_URL` to that remote and configure its credentials in the shell or GitHub Secrets. For example, for S3 configure `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; do not store keys in Git. DagsHub and Google Drive remotes require their provider-specific DVC configuration and authentication; change the remote URL and provide credentials through the provider-supported secure mechanism.
 
 ## Run the full pipeline
 
@@ -78,7 +78,7 @@ The default tracking URI is `sqlite:///mlflow.db` and the experiment is named in
 mlflow ui --backend-store-uri "$MLFLOW_TRACKING_URI" --host 0.0.0.0 --port "$MLFLOW_PORT"
 ```
 
-Open `http://localhost:5000` when using the default port. Each experiment run logs the configured classifier parameters, ROC-AUC, PR-AUC, KS statistic, precision/recall/F1 at the configured threshold, confusion-matrix JSON, ROC/PR plots, and the full preprocessing/model pipeline. The model is selected and compared using `registry.selection_metric`.
+Open `http://localhost:5000` when using the default port. Each experiment run logs the configured classifier parameters, ROC-AUC, PR-AUC, KS statistic, precision/recall/F1 at the configured threshold, confusion-matrix JSON, ROC/PR plots, and the full preprocessing/model pipeline. The model is selected and compared using `registry.selection_metric`. An optional SHAP summary for the best run is controlled by `models.shap_summary_enabled`; it is off by default to keep the normal build lean. To enable it, install `pip install -r requirements-shap.txt` and set the flag in `params.yaml`; incompatibilities are caught and logged rather than stopping training.
 
 After a successful pipeline run, evaluate promotion:
 
@@ -168,10 +168,10 @@ All project-specific settings live in `params.yaml`; `src/config.py` is the shar
 |---|---|---|
 | `project` | `name`, `target_column`, `positive_class`, `feature_columns`, `numeric_features`, `categorical_features`, `categories`, `value_ranges`, `target_values` | Project identity, target/positive label, dynamic input schema, allowed categories and numeric bounds. |
 | `data` | `raw_path`, `processed_path`, `batches_dir`, `batch_fractions`, `random_seed`, `min_age`, `max_age`, `minimum_working_age`, `age_column`, `employment_length_column`, `income_column`, `interest_rate_column`, `income_cap_enabled`, `income_cap_quantile`, `test_size`, `missing_indicator`, `train_path`, `test_path` | Source/output paths, cleaning rules, batch composition, split, seed, and imputation-indicator setting. |
-| `models` | `selected`, `selection_metric`, `decision_threshold`; under each selected model: `class_path`, `imbalance_parameter`, `parameters` | Classifier classes and hyperparameters, class-imbalance strategy, metric used for candidate ranking, and operating threshold. |
+| `models` | `selected`, `decision_threshold`, `shap_summary_enabled`, `shap_sample_size`; under each selected model: `class_path`, `imbalance_parameter`, `parameters` | Classifier classes and hyperparameters, class-imbalance strategy, operating threshold, and optional SHAP output settings. |
 | `registry` | `tracking_uri`, `experiment_name`, `model_name`, `champion_alias`, `challenger_alias`, `selection_metric`, `metric_direction`, `metric_promotion_margin` | MLflow tracking/registry names and guarded champion update policy. |
 | `api` | `host`, `port`, `routes`, `risk_bands`, `request_log_path` | Bind settings, endpoint paths, risk-band labels/cutoffs, and request-log destination. |
-| `monitoring` | `reference_path`, `current_log_path`, `report_path`, `summary_path`, `minimum_rows`, `drift_share_threshold`, `income_shift_multiplier`, `interest_rate_shift`, `api_url`, `sample_limit`, `evidently_shap_enabled` | Drift data locations, sample requirements, detection threshold, demo shifts, and sample cap. |
+| `monitoring` | `reference_path`, `current_log_path`, `report_path`, `summary_path`, `minimum_rows`, `drift_share_threshold`, `income_shift_multiplier`, `interest_rate_shift`, `api_url`, `sample_limit` | Drift data locations, sample requirements, detection threshold, demo shifts, and sample cap. |
 | `paths` | `metrics_path`, `training_summary_path`, `mlflow_artifact_path`, `dvc_remote_url` | Pipeline output and artifact/remote paths. |
 
 The complete variable list is in `.env.example`: `MLFLOW_TRACKING_URI`, `MLFLOW_PORT`, `MLFLOW_BACKEND_STORE_URI`, `MLFLOW_ARTIFACT_ROOT`, `API_HOST`, `API_PORT`, `API_URL`, `HEALTH_PATH`, `LOG_FILE`, and `DVC_REMOTE_URL`. The raw dataset path is a DVC dependency configured at `data.raw_path` in `params.yaml`. In GitHub Actions, remote-only secrets are `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_DEFAULT_REGION`; a shared `MLFLOW_TRACKING_URI` and remote `DVC_REMOTE_URL` are also repository secrets. Never commit `.env` or credentials.

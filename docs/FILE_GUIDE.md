@@ -33,11 +33,12 @@ This guide maps the repository from input data to monitored serving. The design 
 | `.dvcignore` | Keeps DVC internals out of data discovery. |
 | `.gitignore` | Excludes local data artifacts, caches, runtime logs, SQLite state, secrets, and generated reports while keeping DVC pointers tracked. |
 | `requirements.txt` | Exact direct dependency versions for Python 3.11 including FastAPI, DVC, MLflow, Evidently 0.4.40, XGBoost, and scikit-learn. |
+| `requirements-shap.txt` | Optional pinned SHAP dependency set used only when the configured explanation flag is enabled. |
 | `pyproject.toml` | Ruff lint rules and pytest defaults. |
 | `Dockerfile` | Builds the same Python service as a slim non-root container and defines an environment-based health check. |
 | `docker-compose.yml` | Starts MLflow and the prediction API, configures ports/tracking endpoints from environment, and shares persistent logs/artifact/registry volumes. |
 | `.github/workflows/ci.yml` | Runs lint, fixture training, tests, Docker build, and main-branch-only GHCR publication. |
 | `.github/workflows/retrain.yml` | Schedules or manually requests monitoring; retrains if drift is found (or forced), then waits for the protected production Environment before promotion. |
 | `notebooks/eda.ipynb` | Lightweight exploratory notebook for shape, missingness, class balance, and selected numeric summaries using the same configuration. |
-| `logs/` and `reports/` | Runtime request records and human/machine-readable evaluation/drift outputs. Generated artifacts are kept out of ordinary Git commits except DVC metric outputs where appropriate. |
+| `logs/` and `reports/` | Runtime request records and human/machine-readable evaluation/drift outputs. The DVC metrics file is deliberately not ignored; transient reports and summaries are excluded from ordinary Git commits. |
 | `docs/DEMO_SCRIPT.md` | Time-boxed commands and narration for presenting the system in a viva. |

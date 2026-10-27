@@ -76,7 +76,7 @@ monitoring:
   report_path: reports/data_drift.html
   summary_path: reports/drift_summary.json
   minimum_rows: 30
-  drift_share_threshold: 0.5
+  drift_share_threshold: 0.15
   income_shift_multiplier: 1.5
   interest_rate_shift: 3.0
   api_url: "${API_URL:-http://localhost:8000}"

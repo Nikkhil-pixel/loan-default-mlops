@@ -1,6 +1,6 @@
 # Five-minute viva demo script
 
-Before presenting, start from the repository root, activate the Python 3.11 environment, install dependencies, and ensure the supplied raw dataset is checked out. Keep the MLflow UI in a second terminal. The default local tracking backend is SQLite.
+Before presenting, start from the repository root, activate the Python 3.11 environment, install dependencies, and ensure the supplied raw dataset is present. Keep the MLflow UI in a second terminal. The default local tracking backend is SQLite.
 
 ## 0:00–0:40 — Explain the use case and data version
 
@@ -32,7 +32,7 @@ If the UI is not running, start it in a second terminal:
 mlflow ui --backend-store-uri "$MLFLOW_TRACKING_URI" --host 0.0.0.0 --port "$MLFLOW_PORT"
 ```
 
-Open `http://localhost:5000` (or the configured port), select the `loan-default-risk` experiment, and compare ROC-AUC/PR-AUC/KS and the saved ROC, precision-recall, and confusion-matrix artifacts. The experiment and registered model names are configurable in `params.yaml`.
+Open the configured MLflow UI, select the configured experiment, and compare ROC-AUC/PR-AUC/KS and the saved ROC, precision-recall, and confusion-matrix artifacts. Optionally explain that SHAP can be switched on with `models.shap_summary_enabled` and `pip install -r requirements-shap.txt`.
 
 ## 1:40–2:20 — Promote safely
 

@@ -1,0 +1,172 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m src.prepare
+    deps:
+    - path: data/raw/credit_risk_dataset.csv
+      hash: md5
+      md5: 9a01768113784fa109745fd8fe031eee
+      size: 1804682
+    - path: src/config.py
+      hash: md5
+      md5: bbc48c1818f8a295ec73c91927fce668
+      size: 1824
+    - path: src/prepare.py
+      hash: md5
+      md5: 7536a6b89f649ca1a97aaad38730f793
+      size: 1771
+    params:
+      params.yaml:
+        data.age_column: person_age
+        data.employment_length_column: person_emp_length
+        data.income_cap_enabled: false
+        data.income_cap_quantile: 0.99
+        data.income_column: person_income
+        data.max_age: 80
+        data.min_age: 18
+        data.minimum_working_age: 16
+        project.feature_columns:
+        - person_age
+        - person_income
+        - person_home_ownership
+        - person_emp_length
+        - loan_intent
+        - loan_grade
+        - loan_amnt
+        - loan_int_rate
+        - loan_percent_income
+        - cb_person_default_on_file
+        - cb_person_cred_hist_length
+        project.target_column: loan_status
+    outs:
+    - path: data/processed/clean.csv
+      hash: md5
+      md5: 4dca37fce396a519668366fa6a1f6d7b
+      size: 1722439
+  train:
+    cmd: python -m src.train
+    deps:
+    - path: data/processed/clean.csv
+      hash: md5
+      md5: 4dca37fce396a519668366fa6a1f6d7b
+      size: 1722439
+    - path: src/config.py
+      hash: md5
+      md5: bbc48c1818f8a295ec73c91927fce668
+      size: 1824
+    - path: src/metrics.py
+      hash: md5
+      md5: cee7cb55bff0daebc05c3aed20332380
+      size: 2372
+    - path: src/train.py
+      hash: md5
+      md5: cd1c7501fe05d985d9f659a6b9564c81
+      size: 9415
+    params:
+      params.yaml:
+        data.missing_indicator: true
+        data.random_seed: 42
+        data.test_size: 0.2
+        models:
+          selected:
+          - logistic_regression
+          - random_forest
+          - xgboost
+          decision_threshold: 0.5
+          shap_summary_enabled: false
+          shap_sample_size: 60
+          logistic_regression:
+            class_path: sklearn.linear_model.LogisticRegression
+            imbalance_parameter: class_weight
+            parameters:
+              max_iter: 1000
+              C: 1.0
+          random_forest:
+            class_path: sklearn.ensemble.RandomForestClassifier
+            imbalance_parameter: class_weight
+            parameters:
+              n_estimators: 120
+              max_depth: 12
+              min_samples_leaf: 2
+              n_jobs: -1
+          xgboost:
+            class_path: xgboost.XGBClassifier
+            imbalance_parameter: scale_pos_weight
+            parameters:
+              n_estimators: 120
+              max_depth: 5
+              learning_rate: 0.08
+              subsample: 0.9
+              colsample_bytree: 0.9
+              objective: binary:logistic
+              eval_metric: logloss
+              n_jobs: -1
+        project.categorical_features:
+        - person_home_ownership
+        - loan_intent
+        - loan_grade
+        - cb_person_default_on_file
+        project.feature_columns:
+        - person_age
+        - person_income
+        - person_home_ownership
+        - person_emp_length
+        - loan_intent
+        - loan_grade
+        - loan_amnt
+        - loan_int_rate
+        - loan_percent_income
+        - cb_person_default_on_file
+        - cb_person_cred_hist_length
+        project.numeric_features:
+        - person_age
+        - person_income
+        - person_emp_length
+        - loan_amnt
+        - loan_int_rate
+        - loan_percent_income
+        - cb_person_cred_hist_length
+        project.target_column: loan_status
+        registry.selection_metric: roc_auc
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 1e0dfd45297a003f228e47fdd9ce141c
+      size: 344944
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 604baa145ce12f483f626deab948fa0b
+      size: 1377692
+    - path: reports/training_summary.json
+      hash: md5
+      md5: b364b76fde4b40779afda52dcad85df7
+      size: 1558
+  evaluate:
+    cmd: python -m src.evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 1e0dfd45297a003f228e47fdd9ce141c
+      size: 344944
+    - path: reports/training_summary.json
+      hash: md5
+      md5: b364b76fde4b40779afda52dcad85df7
+      size: 1558
+    - path: src/evaluate.py
+      hash: md5
+      md5: a1b068bc5be7dba31e4bf41c94ec96e4
+      size: 2324
+    - path: src/metrics.py
+      hash: md5
+      md5: cee7cb55bff0daebc05c3aed20332380
+      size: 2372
+    params:
+      params.yaml:
+        models.decision_threshold: 0.5
+        paths.metrics_path: reports/metrics.json
+        registry.tracking_uri: ${MLFLOW_TRACKING_URI:-sqlite:///mlflow.db}
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 4a182e2477e4a957aa5098caab1ded87
+      size: 466
