@@ -3,10 +3,10 @@ stages:
   prepare:
     cmd: python -m src.prepare
     deps:
-    - path: data/raw/credit_risk_dataset.csv
+    - path: data/batches/version_1.csv
       hash: md5
-      md5: 9a01768113784fa109745fd8fe031eee
-      size: 1804682
+      md5: 1922a2852d2ac38139595dca9945fbdd
+      size: 1063231
     - path: src/config.py
       hash: md5
       md5: f4d5992f9f94dbf82dc3cfe861b93c80
@@ -41,15 +41,15 @@ stages:
     outs:
     - path: data/processed/clean.csv
       hash: md5
-      md5: 45b5d1c751b0f9f46b9ca276d05bc39a
-      size: 1754112
+      md5: bf68b22371e488643265635f9ff33b95
+      size: 1054558
   train:
     cmd: python -m src.train
     deps:
     - path: data/processed/clean.csv
       hash: md5
-      md5: 45b5d1c751b0f9f46b9ca276d05bc39a
-      size: 1754112
+      md5: bf68b22371e488643265635f9ff33b95
+      size: 1054558
     - path: src/config.py
       hash: md5
       md5: f4d5992f9f94dbf82dc3cfe861b93c80
@@ -140,26 +140,26 @@ stages:
     outs:
     - path: data/processed/test.csv
       hash: md5
-      md5: 029218ecfe01d786443d98d71ee08136
-      size: 351280
+      md5: 4d369f67432e118aedf53bc2cd1ffa64
+      size: 211165
     - path: data/processed/train.csv
       hash: md5
-      md5: 08d77a13311eff20bddf1563305f0add
-      size: 1403030
+      md5: 65810b0c6515c37517ca5e8df56c5af3
+      size: 843591
     - path: reports/training_summary.json
       hash: md5
-      md5: 69799a01be0b6147851d2369b6677507
+      md5: 3e92ffe8eebc2669a012820b479906ec
       size: 1608
   evaluate:
     cmd: python -m src.evaluate
     deps:
     - path: data/processed/test.csv
       hash: md5
-      md5: 029218ecfe01d786443d98d71ee08136
-      size: 351280
+      md5: 4d369f67432e118aedf53bc2cd1ffa64
+      size: 211165
     - path: reports/training_summary.json
       hash: md5
-      md5: 69799a01be0b6147851d2369b6677507
+      md5: 3e92ffe8eebc2669a012820b479906ec
       size: 1608
     - path: src/evaluate.py
       hash: md5
@@ -183,5 +183,5 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 33b3cb44df17b1297cddc44a4e191cb9
-      size: 487
+      md5: 5c1908d80102699950ca6930d438fca4
+      size: 486
