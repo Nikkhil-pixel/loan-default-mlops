@@ -20,7 +20,7 @@ project:
     cb_person_cred_hist_length: [0, 100]
   target_values: [0, 1]
 data:
-  raw_path: data/raw/credit_risk_dataset.csv
+  raw_path: data/batches/version_1.csv
   processed_path: data/processed/clean.csv
   batches_dir: data/batches
   batch_fractions: [0.6, 0.2, 0.2]
