@@ -3,10 +3,10 @@ stages:
   prepare:
     cmd: python -m src.prepare
     deps:
-    - path: data/batches/version_2.csv
+    - path: data/raw/credit_risk_dataset.csv
       hash: md5
-      md5: 0ab8e35bd9992460346f5dd86a49391b
-      size: 1417659
+      md5: 9a01768113784fa109745fd8fe031eee
+      size: 1804682
     - path: src/config.py
       hash: md5
       md5: f4d5992f9f94dbf82dc3cfe861b93c80
@@ -41,15 +41,15 @@ stages:
     outs:
     - path: data/processed/clean.csv
       hash: md5
-      md5: 5e88a9b8b2ae61cfa109aad7cfe5e822
-      size: 1404843
+      md5: 45b5d1c751b0f9f46b9ca276d05bc39a
+      size: 1754112
   train:
     cmd: python -m src.train
     deps:
     - path: data/processed/clean.csv
       hash: md5
-      md5: 5e88a9b8b2ae61cfa109aad7cfe5e822
-      size: 1404843
+      md5: 45b5d1c751b0f9f46b9ca276d05bc39a
+      size: 1754112
     - path: src/config.py
       hash: md5
       md5: f4d5992f9f94dbf82dc3cfe861b93c80
@@ -140,27 +140,27 @@ stages:
     outs:
     - path: data/processed/test.csv
       hash: md5
-      md5: a735ef7e80abfeafabce5e1e477e3130
-      size: 281205
+      md5: 029218ecfe01d786443d98d71ee08136
+      size: 351280
     - path: data/processed/train.csv
       hash: md5
-      md5: ebeacc6e4a36ee257c00382925397ac5
-      size: 1123836
+      md5: 08d77a13311eff20bddf1563305f0add
+      size: 1403030
     - path: reports/training_summary.json
       hash: md5
-      md5: 4f5847ac45f6596bc001e987cd37efe4
-      size: 1593
+      md5: 69799a01be0b6147851d2369b6677507
+      size: 1608
   evaluate:
     cmd: python -m src.evaluate
     deps:
     - path: data/processed/test.csv
       hash: md5
-      md5: a735ef7e80abfeafabce5e1e477e3130
-      size: 281205
+      md5: 029218ecfe01d786443d98d71ee08136
+      size: 351280
     - path: reports/training_summary.json
       hash: md5
-      md5: 4f5847ac45f6596bc001e987cd37efe4
-      size: 1593
+      md5: 69799a01be0b6147851d2369b6677507
+      size: 1608
     - path: src/evaluate.py
       hash: md5
       md5: 1eb85ddecf508a925ea5b25a0781e44d
@@ -183,5 +183,5 @@ stages:
     outs:
     - path: reports/metrics.json
       hash: md5
-      md5: 463729631136820e550e23a4a69497ed
-      size: 471
+      md5: 33b3cb44df17b1297cddc44a4e191cb9
+      size: 487
