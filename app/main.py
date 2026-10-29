@@ -8,7 +8,7 @@ import mlflow
 import mlflow.sklearn
 import pandas as pd
 from fastapi import Body, FastAPI, HTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.logger import log_prediction
 from app.schemas import PredictionInput
 from src.config import load_config, project_path
@@ -47,7 +47,16 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title=CONFIG["project"]["name"], lifespan=lifespan)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def _risk_band(probability: float) -> str:
     bands = CONFIG["api"]["risk_bands"]
