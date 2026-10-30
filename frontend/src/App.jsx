@@ -121,7 +121,7 @@ function Sidebar({ active, onNavigate, apiStatus }) {
         <div className="connection-card">
           <div className="connection-title"><span className={`status-dot ${apiStatus === 'online' ? 'green' : apiStatus === 'checking' ? 'amber' : 'red'}`} />API connection</div>
           <p>{apiStatus === 'online' ? 'Backend reachable' : apiStatus === 'checking' ? 'Checking backend…' : 'Backend unavailable'}</p>
-          <code>localhost:8000</code>
+          <code>Render API</code>
         </div>
         <button className={`nav-item ${active === 'settings' ? 'active' : ''}`} onClick={() => onNavigate('settings')}><Icon name="settings" size={19} /><span>Configuration</span></button>
         <div className="profile">
