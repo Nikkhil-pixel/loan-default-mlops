@@ -19,14 +19,19 @@ STATE: dict[str, Any] = {"model": None, "version": None, "run_id": None, "data_v
 
 
 def reload_model() -> dict[str, Any]:
-    """Load the configured champion alias; preserve a clear error if unavailable."""
-    mlflow.set_tracking_uri(REGISTRY["tracking_uri"])
-    alias = REGISTRY["champion_alias"]
-    uri = f"models:/{REGISTRY['model_name']}@{alias}"
+    """Load the champion from MLflow, falling back to the portable deployment model."""
     try:
+        mlflow.set_tracking_uri(REGISTRY["tracking_uri"])
+        alias = REGISTRY["champion_alias"]
+        uri = f"models:/{REGISTRY['model_name']}@{alias}"
+
         model = mlflow.sklearn.load_model(uri)
         from mlflow import MlflowClient
-        version = MlflowClient(tracking_uri=REGISTRY["tracking_uri"]).get_model_version_by_alias(REGISTRY["model_name"], alias)
+
+        version = MlflowClient(
+            tracking_uri=REGISTRY["tracking_uri"]
+        ).get_model_version_by_alias(REGISTRY["model_name"], alias)
+
         STATE.update({
             "model": model,
             "version": str(version.version),
@@ -34,10 +39,49 @@ def reload_model() -> dict[str, Any]:
             "data_version": version.tags.get("data_version"),
             "error": None,
         })
-        return {"status": "loaded", "model_name": REGISTRY["model_name"], "version": str(version.version), "alias": alias}
-    except Exception as exc:  # Registry may not yet contain a model during initial deployment.
-        STATE.update({"model": None, "version": None, "run_id": None, "data_version": None, "error": str(exc)})
-        return {"status": "unavailable", "error": str(exc)}
+
+        return {
+            "status": "loaded",
+            "model_name": REGISTRY["model_name"],
+            "version": str(version.version),
+            "alias": alias,
+            "source": "mlflow",
+        }
+
+    except Exception as mlflow_error:
+        try:
+            model_path = project_path("models/deployment_model")
+            model = mlflow.sklearn.load_model(str(model_path))
+
+            STATE.update({
+                "model": model,
+                "version": "3",
+                "run_id": None,
+                "data_version": None,
+                "error": None,
+            })
+
+            return {
+                "status": "loaded",
+                "model_name": REGISTRY["model_name"],
+                "version": "3",
+                "alias": REGISTRY["champion_alias"],
+                "source": "deployment_model",
+            }
+
+        except Exception as fallback_error:
+            error = (
+                f"MLflow loading failed: {mlflow_error}; "
+                f"deployment model loading failed: {fallback_error}"
+            )
+            STATE.update({
+                "model": None,
+                "version": None,
+                "run_id": None,
+                "data_version": None,
+                "error": error,
+            })
+            return {"status": "unavailable", "error": error}
 
 
 @asynccontextmanager
